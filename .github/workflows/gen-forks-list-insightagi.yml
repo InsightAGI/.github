@@ -1,0 +1,53 @@
+name: Gen Forks List - InsightAGI
+
+run-name: Gen Forks List - InsightAGI
+
+on:
+  schedule:
+    - cron: "0 0 * * 1,4" # Run every monday and thursday at 0:00 AM
+  workflow_dispatch: # Manual dispatch
+
+permissions:
+  contents: write
+
+env:
+  GH_TOKEN: ${{ secrets.GH_PAT }}
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./scripts
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  gen-forks-list:
+    name: Gen Forks List
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Check out the repository to the runner
+        uses: actions/checkout@v4
+      
+      - name: Configure git
+        run: |
+          git config --global user.name "github-actions[InsightAGI-bot]"
+          git config --global user.email "github-actions[InsightAGI-bot]@users.noreply.github.com"
+      
+      - name: Run script gen-forks-list
+        run: echo "InsightAGI" | ./gen-forks-list.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+      
+      - name: Commit changes
+        run: |
+          cd ..
+          git add .
+          git commit -m "Update Forks List for InsightAGI" || exit 0
+      
+      - name: Push changes
+        run: git push
+        env:
+          GH_TOKEN: ${{ secrets.GH_PAT }}
